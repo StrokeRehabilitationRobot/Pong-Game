@@ -37,6 +37,7 @@ class pong():
         self._paddle2_vel = 0
         self._l_score = 0
         self._r_score = 0
+        self._prev = 0
 
         self._window = pygame.display.set_mode((WIDTH, HEIGHT), 0, 32)
         pygame.display.set_caption('Hello World')
@@ -68,7 +69,7 @@ class pong():
 
 
 #draw function of canvas
-    def draw(self):
+    def draw(self,pos):
 
         canvas = self._window
         canvas.fill(BLACK)
@@ -77,25 +78,11 @@ class pong():
         pygame.draw.line(canvas, WHITE, [WIDTH - PAD_WIDTH, 0],[WIDTH - PAD_WIDTH, HEIGHT], 1)
         pygame.draw.circle(canvas, WHITE, [WIDTH//2, HEIGHT//2], 70, 1)
 
-        # update paddle's vertical position, keep paddle on the screen
-        if self._paddle1_pos[1] > HALF_PAD_HEIGHT and self._paddle1_pos[1] < HEIGHT - HALF_PAD_HEIGHT:
-            self._paddle1_pos[1] += self._paddle1_vel
-        elif self._paddle1_pos[1] == HALF_PAD_HEIGHT and self._paddle1_vel > 0:
-            self._paddle1_pos[1] += self._paddle1_vel
-        elif self._paddle1_pos[1] == HEIGHT - HALF_PAD_HEIGHT and self._paddle1_vel < 0:
-            self._paddle1_pos[1] += self._paddle1_vel
-
-        if self._paddle2_pos[1] > HALF_PAD_HEIGHT and self._paddle2_pos[1] < HEIGHT - HALF_PAD_HEIGHT:
-            self._paddle2_pos[1] += self._paddle2_vel
-        elif self._paddle2_pos[1] == HALF_PAD_HEIGHT and self._paddle2_vel > 0:
-            self._paddle2_pos[1] += self._paddle2_vel
-        elif self._paddle2_pos[1] == HEIGHT - HALF_PAD_HEIGHT and self._paddle2_vel < 0:
-            self._paddle2_pos[1] += self._paddle2_vel
 
         #update ball
         self._ball_pos[0] += int(self._ball_vel[0])
         self._ball_pos[1] += int(self._ball_vel[1])
-
+        self.paddel_location(pos)
         #draw paddles and ball
         pygame.draw.circle(canvas, RED, self._ball_pos, 20, 0)
         pygame.draw.polygon(canvas, GREEN, [[self._paddle1_pos[0] - HALF_PAD_WIDTH, self._paddle1_pos[1] \
@@ -130,6 +117,7 @@ class pong():
             self._l_score += 1
             self.ball_init(False)
 
+
         #update scores
         myfont1 = pygame.font.SysFont("Comic Sans MS", 20)
         label1 = myfont1.render("Score "+str(self._l_score), 1, (255,255,0))
@@ -138,20 +126,40 @@ class pong():
         myfont2 = pygame.font.SysFont("Comic Sans MS", 20)
         label2 = myfont2.render("Score "+str(self._r_score), 1, (255,255,0))
         canvas.blit(label2, (470, 20))
-    
-    
+
+    def paddel_location(self,pos):
+
+        # remap the the range from arm space to game space
+        OldRange = (0.50 - (-0.50))
+        NewRange = (HEIGHT - 0)
+        NewValue = int((((pos - (-0.50)) * NewRange) / OldRange) + 0)
+        print NewValue
+        # update paddle's vertical position, keep paddle on the screen
+        if self._paddle1_pos[1] > HALF_PAD_HEIGHT and self._paddle1_pos[1] < HEIGHT - HALF_PAD_HEIGHT:
+            self._paddle1_pos[1] = NewValue
+        elif self._paddle1_pos[1] == HALF_PAD_HEIGHT and self._paddle1_vel > 0:
+            self._paddle1_pos[1] = NewValue
+        elif self._paddle1_pos[1] == HEIGHT - HALF_PAD_HEIGHT and self._paddle1_vel < 0:
+            self._paddle1_pos[1] = NewValue
+
+        if self._paddle2_pos[1] > HALF_PAD_HEIGHT and self._paddle2_pos[1] < HEIGHT - HALF_PAD_HEIGHT:
+            self._paddle2_pos[1] = 0
+        elif self._paddle2_pos[1] == HALF_PAD_HEIGHT and self._paddle2_vel > 0:
+            self._paddle2_pos[1] = 0
+        elif self._paddle2_pos[1] == HEIGHT - HALF_PAD_HEIGHT and self._paddle2_vel < 0:
+            self._paddle2_pos[1] = 0
 
     def update(self,robot):
 
-        pose1, pose2, pose3 = Dynamics.fk(robot)
-        x, y, z  = pose3[0], pose3[1], pose3[2]
-        #self._paddle1_vel = -int(math.ceil(x))
-        #self._paddle2_vel = int(math.ceil(y))
-        print -int(math.ceil(x))
-        self.draw()
+        score = self._l_score
+        pos0, pos1, pos2  = Dynamics.fk(robot)
+
+
+
+        self.draw(pos2[0])
         pygame.display.update()
         fps.tick(60)
-        #return x_ee, y_ee, z_ee
+        return self._l_score -  score
 
 
 
