@@ -37,7 +37,8 @@ class pong():
         self._paddle2_vel = 0
         self._l_score = 0
         self._r_score = 0
-        self._prev = 0
+        self._flag = 0
+        self._start_timer = 0
 
         self._window = pygame.display.set_mode((WIDTH, HEIGHT), 0, 32)
         pygame.display.set_caption('Hello World')
@@ -128,11 +129,12 @@ class pong():
         canvas.blit(label2, (470, 20))
 
     def paddel_location(self,pos):
-
+        pos = -pos
         # remap the the range from arm space to game space
-        OldRange = (0.50 - (-0.50))
+        OldRange = (0.45- (-0.45))
         NewRange = (HEIGHT - 0)
-        NewValue = int((((pos - (-0.50)) * NewRange) / OldRange) + 0)
+        NewValue = int((((pos - (-0.45)) * NewRange) / OldRange) + 0)
+        print pos
         print NewValue
         # update paddle's vertical position, keep paddle on the screen
         if self._paddle1_pos[1] > HALF_PAD_HEIGHT and self._paddle1_pos[1] < HEIGHT - HALF_PAD_HEIGHT:
@@ -140,6 +142,8 @@ class pong():
         elif self._paddle1_pos[1] == HALF_PAD_HEIGHT and self._paddle1_vel > 0:
             self._paddle1_pos[1] = NewValue
         elif self._paddle1_pos[1] == HEIGHT - HALF_PAD_HEIGHT and self._paddle1_vel < 0:
+            self._paddle1_pos[1] = NewValue
+        else:
             self._paddle1_pos[1] = NewValue
 
         if self._paddle2_pos[1] > HALF_PAD_HEIGHT and self._paddle2_pos[1] < HEIGHT - HALF_PAD_HEIGHT:
@@ -153,13 +157,28 @@ class pong():
 
         score = self._l_score
         pos0, pos1, pos2  = Dynamics.fk(robot)
-
-
-
-        self.draw(pos2[0])
+        self.draw(pos2[1])
         pygame.display.update()
         fps.tick(60)
-        return self._l_score -  score
+
+        score = self._l_score -  score
+        # logic to vibrate the handle.
+        # it wil be on for 1 sec after you score
+        if score and not self._flag:
+            self._flag = 1
+            self._start_timer = time.clock()
+            return 1
+
+        elif self._flag:
+            now = time.clock()
+            if math.fabs(now - self._start_timer) > 1:
+                self._flag = 0
+                return 0
+            else:
+                return 1
+        else:
+            return 0
+
 
 
 
