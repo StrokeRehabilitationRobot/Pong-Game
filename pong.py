@@ -40,6 +40,7 @@ class pong():
         self._r_score = 0
         self._flag = 0
         self._start_timer = 0
+        self._vib = False
 
         self._window = pygame.display.set_mode((WIDTH, HEIGHT), 0, 32)
         pygame.display.set_caption('Hello World')
@@ -107,6 +108,11 @@ class pong():
             self._ball_vel[0] = -self._ball_vel[0]
             self._ball_vel[0] *= 1.1
             self._ball_vel[1] *= 1.1
+            if self._ball_pos[0] < WIDTH/2:
+                self._vib = True
+            else:
+                self._vib = False
+
         elif int(self._ball_pos[0]) <= BALL_RADIUS + PAD_WIDTH:
             self._r_score += 1
             self.ball_init(True)
@@ -133,10 +139,9 @@ class pong():
         pos = -pos
         # remap the the range from arm space to game space
         OldRange = (0.45- (-0.45))
-        NewRange = (HEIGHT - 0)
-        NewValue = int((((pos - (-0.45)) * NewRange) / OldRange) + 0)
-        print pos
-        print NewValue
+        NewRange = ( (HEIGHT-HALF_PAD_HEIGHT) - HALF_PAD_HEIGHT)
+        NewValue = int((((pos - (-0.45)) * NewRange) / OldRange) + HALF_PAD_HEIGHT)
+
         # update paddle's vertical position, keep paddle on the screen
         # if self._paddle1_pos[1] > HALF_PAD_HEIGHT and self._paddle1_pos[1] < HEIGHT - HALF_PAD_HEIGHT:
         #     self._paddle1_pos[1] = NewValue
@@ -146,6 +151,7 @@ class pong():
         #     self._paddle1_pos[1] = NewValue
         # else:
         #     self._paddle1_pos[1] = NewValue
+
         self._paddle1_pos[1] = NewValue
         np.clip(self._paddle1_pos[1], HALF_PAD_HEIGHT, HEIGHT - HALF_PAD_HEIGHT)
 
@@ -162,16 +168,16 @@ class pong():
 
     def update(self,robot):
 
-        score = self._l_score
+
         pos0, pos1, pos2  = Dynamics.fk(robot)
         self.draw(pos2[1])
         pygame.display.update()
         fps.tick(60)
 
-        score = self._l_score -  score
+        boom = self._vib
         # logic to vibrate the handle.
         # it wil be on for 1 sec after you score
-        if score and not self._flag:
+        if boom and not self._flag:
             self._flag = 1
             self._start_timer = time.clock()
             return 1
