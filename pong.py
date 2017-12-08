@@ -7,6 +7,7 @@ import time
 import math
 import random
 import pygame, sys
+import numpy as np
 from pygame.locals import *
 
 pygame.init()
@@ -137,21 +138,27 @@ class pong():
         print pos
         print NewValue
         # update paddle's vertical position, keep paddle on the screen
-        if self._paddle1_pos[1] > HALF_PAD_HEIGHT and self._paddle1_pos[1] < HEIGHT - HALF_PAD_HEIGHT:
-            self._paddle1_pos[1] = NewValue
-        elif self._paddle1_pos[1] == HALF_PAD_HEIGHT and self._paddle1_vel > 0:
-            self._paddle1_pos[1] = NewValue
-        elif self._paddle1_pos[1] == HEIGHT - HALF_PAD_HEIGHT and self._paddle1_vel < 0:
-            self._paddle1_pos[1] = NewValue
-        else:
-            self._paddle1_pos[1] = NewValue
+        # if self._paddle1_pos[1] > HALF_PAD_HEIGHT and self._paddle1_pos[1] < HEIGHT - HALF_PAD_HEIGHT:
+        #     self._paddle1_pos[1] = NewValue
+        # elif self._paddle1_pos[1] == HALF_PAD_HEIGHT and self._paddle1_vel > 0:
+        #     self._paddle1_pos[1] = NewValue
+        # elif self._paddle1_pos[1] == HEIGHT - HALF_PAD_HEIGHT and self._paddle1_vel < 0:
+        #     self._paddle1_pos[1] = NewValue
+        # else:
+        #     self._paddle1_pos[1] = NewValue
+        self._paddle1_pos[1] = NewValue
+        np.clip(self._paddle1_pos[1], HALF_PAD_HEIGHT, HEIGHT - HALF_PAD_HEIGHT)
 
-        if self._paddle2_pos[1] > HALF_PAD_HEIGHT and self._paddle2_pos[1] < HEIGHT - HALF_PAD_HEIGHT:
-            self._paddle2_pos[1] = 0
-        elif self._paddle2_pos[1] == HALF_PAD_HEIGHT and self._paddle2_vel > 0:
-            self._paddle2_pos[1] = 0
-        elif self._paddle2_pos[1] == HEIGHT - HALF_PAD_HEIGHT and self._paddle2_vel < 0:
-            self._paddle2_pos[1] = 0
+        self._paddle2_pos[1] = self._ball_pos[1]
+        np.clip(self._paddle2_pos[1], HALF_PAD_HEIGHT , HEIGHT - HALF_PAD_HEIGHT )
+
+
+        # if self._paddle2_pos[1] > HALF_PAD_HEIGHT and self._paddle2_pos[1] < HEIGHT - HALF_PAD_HEIGHT:
+        #     self._paddle2_pos[1] = 0
+        # elif self._paddle2_pos[1] == HALF_PAD_HEIGHT and self._paddle2_vel > 0:
+        #     self._paddle2_pos[1] = 0
+        # elif self._paddle2_pos[1] == HEIGHT - HALF_PAD_HEIGHT and self._paddle2_vel < 0:
+        #     self._paddle2_pos[1] = 0
 
     def update(self,robot):
 
