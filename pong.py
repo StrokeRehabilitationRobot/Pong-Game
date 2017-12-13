@@ -2,6 +2,7 @@
 
 from UDP.UDP import UDP
 from Main import Robot
+import copy
 from Dynamics import Dynamics
 import time
 import math
@@ -21,7 +22,7 @@ BLACK = (0,0,0)
 
 #globals
 WIDTH = 600
-HEIGHT = 400       
+HEIGHT = 400
 BALL_RADIUS = 20
 PAD_WIDTH = 8
 PAD_HEIGHT = 80
@@ -34,8 +35,8 @@ class pong():
     def __init__(self):
         self._ball_pos = [0,0]
         self._ball_vel = [0,0]
-        self._paddle1_vel = 0
-        self._paddle2_vel = 0
+        self._paddle1_vel = 1
+        self._paddle2_vel = 1
         self._l_score = 0
         self._r_score = 0
         self._flag = 0
@@ -47,6 +48,13 @@ class pong():
 
         self._paddle1_pos = [HALF_PAD_WIDTH - 1, HEIGHT / 2]
         self._paddle2_pos = [WIDTH + 1 - HALF_PAD_WIDTH, HEIGHT / 2]
+
+        canvas = self._window
+        canvas.fill(BLACK)
+        pygame.draw.line(canvas, WHITE, [WIDTH / 2, 0], [WIDTH / 2, HEIGHT], 1)
+        pygame.draw.line(canvas, WHITE, [PAD_WIDTH, 0], [PAD_WIDTH, HEIGHT], 1)
+        pygame.draw.line(canvas, WHITE, [WIDTH - PAD_WIDTH, 0], [WIDTH - PAD_WIDTH, HEIGHT], 1)
+        pygame.draw.circle(canvas, WHITE, [WIDTH // 2, HEIGHT // 2], 70, 1)
 
         if random.randrange(0, 2) == 0:
             self.ball_init(True)
@@ -81,11 +89,19 @@ class pong():
         pygame.draw.line(canvas, WHITE, [WIDTH - PAD_WIDTH, 0],[WIDTH - PAD_WIDTH, HEIGHT], 1)
         pygame.draw.circle(canvas, WHITE, [WIDTH//2, HEIGHT//2], 70, 1)
 
+        old_ball_pose =  copy.copy(self._ball_pos)
 
         #update ball
         self._ball_pos[0] += int(self._ball_vel[0])
         self._ball_pos[1] += int(self._ball_vel[1])
-        self.paddel_location(pos)
+        #print old_ball_pose
+        #print self._ball_pos[0]
+
+        self.user_paddle_update(pos)
+        self.computer_paddle_update(old_ball_pose)
+
+
+
         #draw paddles and ball
         pygame.draw.circle(canvas, RED, self._ball_pos, 20, 0)
         pygame.draw.polygon(canvas, GREEN, [[self._paddle1_pos[0] - HALF_PAD_WIDTH, self._paddle1_pos[1] \
@@ -104,14 +120,15 @@ class pong():
             self._ball_vel[1] = -self._ball_vel[1]
 
         #ball collison check on gutters or paddles
+        self._vib = False
+
         if int(self._ball_pos[0]) <= BALL_RADIUS + PAD_WIDTH and int(self._ball_pos[1]) in range(self._paddle1_pos[1] - HALF_PAD_HEIGHT,self._paddle1_pos[1] + HALF_PAD_HEIGHT,1):
             self._ball_vel[0] = -self._ball_vel[0]
             self._ball_vel[0] *= 1.1
             self._ball_vel[1] *= 1.1
             if self._ball_pos[0] < WIDTH/2:
                 self._vib = True
-            else:
-                self._vib = False
+
 
         elif int(self._ball_pos[0]) <= BALL_RADIUS + PAD_WIDTH:
             self._r_score += 1
@@ -135,46 +152,52 @@ class pong():
         label2 = myfont2.render("Score "+str(self._r_score), 1, (255,255,0))
         canvas.blit(label2, (470, 20))
 
-    def paddel_location(self,pos):
+
+    def user_paddle_update(self,pos):
+        print pos
         pos = -pos
         # remap the the range from arm space to game space
-        OldRange = (0.45- (-0.45))
+        OldRange = (0.35 - (-0.35))
         NewRange = ( (HEIGHT-HALF_PAD_HEIGHT) - HALF_PAD_HEIGHT)
-        NewValue = int((((pos - (-0.45)) * NewRange) / OldRange) + HALF_PAD_HEIGHT)
-
-        # update paddle's vertical position, keep paddle on the screen
-        # if self._paddle1_pos[1] > HALF_PAD_HEIGHT and self._paddle1_pos[1] < HEIGHT - HALF_PAD_HEIGHT:
-        #     self._paddle1_pos[1] = NewValue
-        # elif self._paddle1_pos[1] == HALF_PAD_HEIGHT and self._paddle1_vel > 0:
-        #     self._paddle1_pos[1] = NewValue
-        # elif self._paddle1_pos[1] == HEIGHT - HALF_PAD_HEIGHT and self._paddle1_vel < 0:
-        #     self._paddle1_pos[1] = NewValue
-        # else:
-        #     self._paddle1_pos[1] = NewValue
-
-        self._paddle1_pos[1] = NewValue
-        np.clip(self._paddle1_pos[1], HALF_PAD_HEIGHT, HEIGHT - HALF_PAD_HEIGHT)
-
-        self._paddle2_pos[1] = self._ball_pos[1]
-        np.clip(self._paddle2_pos[1], HALF_PAD_HEIGHT , HEIGHT - HALF_PAD_HEIGHT )
+        NewValue = int((((pos - (-0.35)) * NewRange) / OldRange) + HALF_PAD_HEIGHT)
 
 
-        # if self._paddle2_pos[1] > HALF_PAD_HEIGHT and self._paddle2_pos[1] < HEIGHT - HALF_PAD_HEIGHT:
-        #     self._paddle2_pos[1] = 0
-        # elif self._paddle2_pos[1] == HALF_PAD_HEIGHT and self._paddle2_vel > 0:
-        #     self._paddle2_pos[1] = 0
-        # elif self._paddle2_pos[1] == HEIGHT - HALF_PAD_HEIGHT and self._paddle2_vel < 0:
-        #     self._paddle2_pos[1] = 0
-
-    def update(self,robot):
+        self._paddle1_pos[1] = np.clip(NewValue, HALF_PAD_HEIGHT, HEIGHT - HALF_PAD_HEIGHT)
 
 
-        pos0, pos1, pos2  = Dynamics.fk(robot)
-        self.draw(pos2[1])
+    def computer_paddle_update(self,old_pose):
+
+        slope =   (old_pose[1] - self._ball_pos[1])/ (old_pose[0] - self._ball_pos[0])
+
+        b = self._ball_pos[1] - slope*self._ball_pos[0]
+
+        if self._ball_pos < 0.5*WIDTH:
+
+            if self._paddle2_pos + HALF_PAD_HEIGHT < 0.5*HEIGHT:
+                self._paddle2_pos[1] -= self._paddle2_vel
+            elif self._paddle2_pos + HALF_PAD_HEIGHT > 0.5*HEIGHT:
+                self._paddle2_pos[1] += self._paddle2_vel
+
+
+        intersection = slope*(WIDTH) + b
+        if self._paddle2_pos[1] < intersection:
+            self._paddle2_pos[1] += self._paddle2_vel
+        elif self._paddle2_pos[1] > intersection:
+            self._paddle2_pos[1] -= self._paddle2_vel
+
+
+        self._paddle2_pos[1] = np.clip(self._paddle2_pos[1], HALF_PAD_HEIGHT, HEIGHT - HALF_PAD_HEIGHT)
+
+    def update(self,pos):
+
+
+
+        self.draw(pos)
         pygame.display.update()
         fps.tick(60)
 
         boom = self._vib
+        #print boom
         # logic to vibrate the handle.
         # it wil be on for 1 sec after you score
         if boom and not self._flag:
@@ -196,29 +219,3 @@ class pong():
 
 
 
-# #game loop
-# while True:
-#
-#     draw(window)
-#
-#     for event in pygame.event.get():
-#
-#
-#
-#
-#         x, y, z = read_Data()
-#
-#         paddle1_vel = -int(math.ceil(x))
-#         paddle2_vel = int(math.ceil(y))
-#
-#         if event.type == KEYDOWN:
-#             keydown(event)
-#         elif event.type == KEYUP:
-#             keyup(event)
-#         elif event.type == QUIT:
-#             pygame.quit()
-#             sys.exit()
-#
-#
-#     pygame.display.update()
-#     fps.tick(60)
