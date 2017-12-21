@@ -82,6 +82,12 @@ class pong():
 #draw function of canvas
     def draw(self,pos):
 
+
+        # turn off vibrator
+        self._vib = False
+
+
+        # draw the background
         canvas = self._window
         canvas.fill(BLACK)
         pygame.draw.line(canvas, WHITE, [WIDTH / 2, 0],[WIDTH / 2, HEIGHT], 1)
@@ -89,14 +95,15 @@ class pong():
         pygame.draw.line(canvas, WHITE, [WIDTH - PAD_WIDTH, 0],[WIDTH - PAD_WIDTH, HEIGHT], 1)
         pygame.draw.circle(canvas, WHITE, [WIDTH//2, HEIGHT//2], 70, 1)
 
+        #save old ball position
         old_ball_pose =  copy.copy(self._ball_pos)
 
         #update ball
         self._ball_pos[0] += int(self._ball_vel[0])
         self._ball_pos[1] += int(self._ball_vel[1])
-        #print old_ball_pose
-        #print self._ball_pos[0]
 
+
+        #update the padels location
         self.user_paddle_update(pos)
         self.computer_paddle_update(old_ball_pose)
 
@@ -104,14 +111,25 @@ class pong():
 
         #draw paddles and ball
         pygame.draw.circle(canvas, RED, self._ball_pos, 20, 0)
-        pygame.draw.polygon(canvas, GREEN, [[self._paddle1_pos[0] - HALF_PAD_WIDTH, self._paddle1_pos[1] \
-                                             - HALF_PAD_HEIGHT], [self._paddle1_pos[0] - HALF_PAD_WIDTH, \
+        pygame.draw.polygon(canvas, GREEN, [[self._paddle1_pos[0] - HALF_PAD_WIDTH,   \
+                                             self._paddle1_pos[1] - HALF_PAD_HEIGHT], \
+                                            [self._paddle1_pos[0] - HALF_PAD_WIDTH,   \
                                              self._paddle1_pos[1] + HALF_PAD_HEIGHT], \
-                                             [self._paddle1_pos[0] + HALF_PAD_WIDTH, \
-                                              self._paddle1_pos[1] + HALF_PAD_HEIGHT],
-                                              [self._paddle1_pos[0] + HALF_PAD_WIDTH, self._paddle1_pos[1] - HALF_PAD_HEIGHT]], 0)
+                                            [self._paddle1_pos[0] + HALF_PAD_WIDTH,   \
+                                             self._paddle1_pos[1] + HALF_PAD_HEIGHT], \
+                                            [self._paddle1_pos[0] + HALF_PAD_WIDTH,   \
+                                             self._paddle1_pos[1] - HALF_PAD_HEIGHT]], 0)
 
-        pygame.draw.polygon(canvas, GREEN, [[self._paddle2_pos[0] - HALF_PAD_WIDTH, self._paddle2_pos[1] - HALF_PAD_HEIGHT], [self._paddle2_pos[0] - HALF_PAD_WIDTH, self._paddle2_pos[1] + HALF_PAD_HEIGHT], [self._paddle2_pos[0] + HALF_PAD_WIDTH, self._paddle2_pos[1] + HALF_PAD_HEIGHT], [self._paddle2_pos[0] + HALF_PAD_WIDTH, self._paddle2_pos[1] - HALF_PAD_HEIGHT]], 0)
+        pygame.draw.polygon(canvas, GREEN, [[self._paddle2_pos[0] - HALF_PAD_WIDTH,   \
+                                             self._paddle2_pos[1] - HALF_PAD_HEIGHT], \
+                                            [self._paddle2_pos[0] - HALF_PAD_WIDTH,   \
+                                             self._paddle2_pos[1] + HALF_PAD_HEIGHT], \
+                                            [self._paddle2_pos[0] + HALF_PAD_WIDTH,   \
+                                             self._paddle2_pos[1] + HALF_PAD_HEIGHT], \
+                                            [self._paddle2_pos[0] + HALF_PAD_WIDTH,   \
+                                             self._paddle2_pos[1] - HALF_PAD_HEIGHT]], 0)
+
+
 
         #ball collision check on top and bottom walls
         if int(self._ball_pos[1]) <= BALL_RADIUS:
@@ -120,24 +138,27 @@ class pong():
             self._ball_vel[1] = -self._ball_vel[1]
 
         #ball collison check on gutters or paddles
-        self._vib = False
 
-        if int(self._ball_pos[0]) <= BALL_RADIUS + PAD_WIDTH and int(self._ball_pos[1]) in range(self._paddle1_pos[1] - HALF_PAD_HEIGHT,self._paddle1_pos[1] + HALF_PAD_HEIGHT,1):
+        if int(self._ball_pos[0]) <= BALL_RADIUS + PAD_WIDTH and \
+               int(self._ball_pos[1]) in range(self._paddle1_pos[1] - HALF_PAD_HEIGHT, self._paddle1_pos[1] + HALF_PAD_HEIGHT,1):
+
             self._ball_vel[0] = -self._ball_vel[0]
             self._ball_vel[0] *= 1.1
             self._ball_vel[1] *= 1.1
             if self._ball_pos[0] < WIDTH/2:
                 self._vib = True
 
-
         elif int(self._ball_pos[0]) <= BALL_RADIUS + PAD_WIDTH:
             self._r_score += 1
             self.ball_init(True)
 
-        if int(self._ball_pos[0]) >= WIDTH + 1 - BALL_RADIUS - PAD_WIDTH and int(self._ball_pos[1]) in range(self._paddle2_pos[1] - HALF_PAD_HEIGHT,self._paddle2_pos[1] + HALF_PAD_HEIGHT,1):
+        if int(self._ball_pos[0]) >= WIDTH + 1 - BALL_RADIUS - PAD_WIDTH and \
+           int(self._ball_pos[1]) in range(self._paddle2_pos[1] - HALF_PAD_HEIGHT,self._paddle2_pos[1] + HALF_PAD_HEIGHT,1):
+
             self._ball_vel[0] = -self._ball_vel[0]
             self._ball_vel[0] *= 1.1
             self._ball_vel[1] *= 1.1
+
         elif int(self._ball_pos[0]) >= WIDTH + 1 - BALL_RADIUS - PAD_WIDTH:
             self._l_score += 1
             self.ball_init(False)
@@ -154,6 +175,11 @@ class pong():
 
 
     def user_paddle_update(self,pos):
+        """
+        computs the location of the human player padel
+        :param pos:
+        :return:
+        """
         print pos
         pos = -pos
         # remap the the range from arm space to game space
@@ -166,7 +192,12 @@ class pong():
 
 
     def computer_paddle_update(self,old_pose):
-
+        """
+        computer the location of the computer player
+        :param old_pose: last poisiton of the ball
+        :return:
+        """
+        # Figure out where the ball is heading
         slope =   (old_pose[1] - self._ball_pos[1])/ (old_pose[0] - self._ball_pos[0])
 
         b = self._ball_pos[1] - slope*self._ball_pos[0]
@@ -189,8 +220,11 @@ class pong():
         self._paddle2_pos[1] = np.clip(self._paddle2_pos[1], HALF_PAD_HEIGHT, HEIGHT - HALF_PAD_HEIGHT)
 
     def update(self,pos):
+        """
 
-
+        :param pos: position of the controller to move the paddle
+        :return:
+        """
 
         self.draw(pos)
         pygame.display.update()
