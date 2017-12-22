@@ -180,7 +180,6 @@ class pong():
         :param pos:
         :return:
         """
-        print pos
         pos = -pos
         # remap the the range from arm space to game space
         OldRange = (0.35 - (-0.35))
